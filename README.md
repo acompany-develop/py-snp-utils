@@ -22,8 +22,8 @@ The Python module `pysnputils` consists of the following submodules:
 | Submodules | Descriptions |
 | :- | :- |
 | `types` | attestation report types and parsers |
-| `fetch` | (to be implemented) functions to fetch VCEK certificate chains from AMD KDS |
-| `verify` | (to be implemented) functions to verify VCEK certificate chains and SNP reports |
+| `fetch` | functions to fetch VCEK certificate chains from AMD KDS |
+| `verify` | functions to verify VCEK certificate chains and SNP reports |
 
 ### Example code
 
@@ -54,14 +54,23 @@ The `examples/` directory contains scripts that serve as both usage examples and
 |--------|-------------|
 | `display.py` | Display SNP attestation report in JSON format |
 | `fetch.py` | Fetch ARK, ASK, VCEK and CRL from AMD KDS in PEM format |
+| `verify.py` | Verify VCEK certificate chain and SNP report signature |
 
 ```bash
 # Display SNP report in JSON format
 python examples/display.py
-# Default input: ./examples/reportV3.bin
+# Default input report: ./examples/reportV3.bin
+# Default input model: autodetect
 
 # Fetch VCEK cert chain and CRL
 python examples/fetch.py
-# Default input: ./examples/reportV3.bin
+# Default input report: ./examples/reportV3.bin
+# Default input model: autodetect
 # Default output: ./examples/{ark|ask|vcek|crl}.pem
+
+# Verify VCEK cert chain and SNP report signature
+python examples/verify.py
+# Default input certs: ./examples/{ark|ask|vcek}.pem
+# Default input report: ./examples/reportV3.bin
+# Default input model: autodetect
 ```
