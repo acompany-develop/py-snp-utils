@@ -1,8 +1,5 @@
 """
 Example usage of pysnputils.
-
-Install the package first:
-    pip install -e .  (from the project root)
 """
 import json
 import os
@@ -14,7 +11,7 @@ DEFAULT_REPORT_PATH = os.path.join(os.path.dirname(__file__), "reportV3.bin")
 
 def main():
     input_path = input(f"Enter the path to the report file (default: {DEFAULT_REPORT_PATH}): ") or DEFAULT_REPORT_PATH
-    proc_model = input(f"Enter the processor model (default: autodetect): ") or None
+    proc_model = input("Enter the processor model (default: autodetect): ") or None
     with open(input_path, "rb") as f:
         report_bin = f.read()
     parsed_report = AttestationReport.from_bytes(report_bin, processor_model=proc_model)

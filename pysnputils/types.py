@@ -29,7 +29,8 @@ __all__ = [
 
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum
-
+from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+from cryptography.hazmat.primitives import hashes
 
 # Helper functions
 def get_bit(raw: bytes, bit: int) -> int:
@@ -179,7 +180,15 @@ class GuestPolicy:
     # Class Methods
     @classmethod
     def from_bytes(cls, raw: bytes, report_version: int = 5) -> "GuestPolicy":
-        """Create GuestPolicy from 8 bytes (64 bits)."""
+        """Create GuestPolicy from 8 bytes (64 bits).
+        
+        Args:
+            raw: bytes
+            report_version: int (default: 5)
+
+        Returns:
+            GuestPolicy
+        """
         return cls(raw=raw, report_version=report_version)
 
     # Properties
@@ -292,7 +301,15 @@ class PlatformInfo:
     # Class Methods
     @classmethod
     def from_bytes(cls, data: bytes, report_version: int = 5) -> "PlatformInfo":
-        """Create PlatformInfo from 8 bytes (64 bits)."""
+        """Create PlatformInfo from 8 bytes (64 bits).
+        
+        Args:
+            data: bytes
+            report_version: int (default: 5)
+
+        Returns:
+            PlatformInfo
+        """
         return cls(raw=data, report_version=report_version)
 
     # Properties
@@ -372,7 +389,14 @@ class KeyInfo:
     # Class Methods
     @classmethod
     def from_bytes(cls, data: bytes) -> "KeyInfo":
-        """Create KeyInfo from 4 bytes (32 bits)."""
+        """Create KeyInfo from 4 bytes (32 bits).
+        
+        Args:
+            data: bytes
+
+        Returns:
+            KeyInfo
+        """
         return cls(raw=data)
 
     @property
@@ -444,7 +468,15 @@ class TcbVersion:
     # Class Methods
     @classmethod
     def from_bytes(cls, data: bytes, turin: bool = False) -> "TcbVersion":
-        """Create TcbVersion from 8 bytes (64 bits)."""
+        """Create TcbVersion from 8 bytes (64 bits).
+        
+        Args:
+            data: bytes
+            turin: bool (default: False)
+
+        Returns:
+            TcbVersion
+        """
         return cls(raw=data, turin=turin)
 
     # Properties
@@ -511,10 +543,23 @@ class EcdsaSignature:
             "sig_s": self.sig_s.hex(),
         }
 
+    def to_dss_signature(self) -> bytes:
+        """Convert EcdsaSignature to an ASN.1 encoded DSS signature."""
+        int_r = int.from_bytes(self.sig_r, "little")
+        int_s = int.from_bytes(self.sig_s, "little")
+        return encode_dss_signature(int_r, int_s)
+
     # Class Methods
     @classmethod
     def from_bytes(cls, data: bytes) -> "EcdsaSignature":
-        """Create EcdsaSignature from 512 bytes."""
+        """Create EcdsaSignature from 512 bytes.
+        
+        Args:
+            data: bytes
+
+        Returns:
+            EcdsaSignature
+        """
         return cls(raw=data)
 
     # Properties
@@ -645,7 +690,18 @@ class AttestationReport:
     # Class Methods
     @classmethod
     def from_bytes(cls, data: bytes, processor_model: ProcessorModel | None = None) -> "AttestationReport":
-        """Create AttestationReport from 1184 bytes."""
+        """
+        Create AttestationReport from 1184 bytes.
+        If processor_model is not specified, it will be auto-detected from the report (report version >= 3).
+        If processor_model is specified, it will be used instead of auto-detecting from the report.
+
+        Args:
+            data: bytes
+            processor_model: ProcessorModel | None (default: None)
+
+        Returns:
+            AttestationReport
+        """
         return cls(raw=data, processor_model=processor_model)
 
     # Properties
@@ -827,3 +883,16 @@ class AttestationReport:
     def signature(self) -> EcdsaSignature:
         """ECDSA signature (512 bytes)."""
         return EcdsaSignature.from_bytes(self.raw[0x2A0:0x4A0])
+
+    @property
+    def tbs(self) -> bytes:
+        """TBS (To Be Signed) data."""
+        return self.raw[0x00:0x2A0]
+
+    @property
+    def signature_hash_algorithm(self) -> hashes.HashAlgorithm:
+        """Signature hash algorithm."""
+        if self.signature_algorithm == SignatureAlgorithm.ECDSA_P384_SHA384:
+            return hashes.SHA384()
+        else:
+            raise ValueError(f"Unknown signature hash algorithm: {self.signature_algorithm}")

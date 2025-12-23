@@ -6,3 +6,4 @@ __version__ = "0.1.0"
 
 import pysnputils.types
 import pysnputils.fetch
+import pysnputils.verify
