@@ -75,13 +75,21 @@ def verify_signature(dss_sig: bytes, tbs: bytes, cert: x509.Certificate, hash_al
         bool
     """
     pubkey = cert.public_key()
-    if isinstance(pubkey, rsa.RSAPublicKey):
-        pubkey.verify(dss_sig, tbs, padding.PSS(mgf=padding.MGF1(hash_alg), salt_length=hash_alg.digest_size), hash_alg)
-    elif isinstance(pubkey, ec.EllipticCurvePublicKey):
-        pubkey.verify(dss_sig, tbs, ec.ECDSA(hash_alg))
-    else:
-        pubkey.verify(dss_sig, tbs, hash_alg)
-    return True
+    try:
+        if isinstance(pubkey, rsa.RSAPublicKey):
+            pubkey.verify(
+                dss_sig,
+                tbs,
+                padding.PSS(mgf=padding.MGF1(hash_alg), salt_length=hash_alg.digest_size),
+                hash_alg,
+            )
+        elif isinstance(pubkey, ec.EllipticCurvePublicKey):
+            pubkey.verify(dss_sig, tbs, ec.ECDSA(hash_alg))
+        else:
+            pubkey.verify(dss_sig, tbs, hash_alg)
+        return True
+    except InvalidSignature:
+        return False
 
 
 def verify_report_signature(report: AttestationReport, vcek: x509.Certificate) -> bool:
