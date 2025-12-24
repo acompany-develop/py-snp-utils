@@ -26,6 +26,9 @@ python display.py -i $REPORT_PATH [-p $PROCESSOR_MODEL]
 python display.py --in $REPORT_PATH [--processor-model $PROCESSOR_MODEL]
 ```
 
+- `-i, --in`: Path to SNP attestation report
+- `-p, --processor-model`: Specify processor model (default: autodetect). For V2 reports, processor model must be specified.
+
 ### fetch
 
 ```shell
@@ -36,6 +39,10 @@ python fetch.py -i $REPORT_PATH -o $CERTS_DIR [-p $PROCESSOR_MODEL]
 python fetch.py --in $REPORT_PATH --outdir $CERTS_DIR [--processor-model $PROCESSOR_MODEL]
 ```
 
+- `-i, --in`: Path to SNP attestation report
+- `-o, --outdir`: Output directory to write certs
+- `-p, --processor-model`: Specify processor model (default: autodetect). For V2 reports, processor model must be specified.
+
 ### verify
 
 ```shell
@@ -45,6 +52,10 @@ python verify.py -r $REPORT_PATH -c $CERTS_DIR [-p $PROCESSOR_MODEL]
 ```shell
 python verify.py --report $REPORT_PATH --certs $CERTS_DIR [--processor-model $PROCESSOR_MODEL]
 ```
+
+- `-r, --report`: Path to SNP attestation report
+- `-c, --certs`: Directory containing vcek.pem/ask.pem/ark.pem
+- `-p, --processor-model`: Specify processor model (default: autodetect). For V2 reports, processor model must be specified.
 
 ## Notes
 

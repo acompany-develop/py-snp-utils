@@ -11,9 +11,7 @@
 ### Install from repository
 
 ```shell
-git clone https://github.com/acompany-develop/py-snp-utils
-cd py-snp-utils
-pip install -e .
+pip install git+https://github.com/acompany-develop/py-snp-utils
 ```
 
 ## Usage
