@@ -17,7 +17,7 @@ def main():
         "--in",
         dest="in_path",
         required=True,
-        help=f"Path to SNP attestation report",
+        help="Path to SNP attestation report",
     )
     parser.add_argument(
         "-p",

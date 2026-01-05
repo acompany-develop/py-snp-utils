@@ -83,9 +83,9 @@ def report_version_to_variant(version: int) -> ReportVariant:
     """Convert a report version to a report variant."""
     if version == 2:
         return ReportVariant.V2
-    elif version in [3, 4]:
+    if version in [3, 4]:
         return ReportVariant.V3
-    elif version == 5:
+    if version == 5:
         return ReportVariant.V5
     raise ValueError(f"invalid or unsupported report version: {version}")
 
@@ -114,15 +114,13 @@ def detect_processor_model(report_version: int, cpuid_fam_id: int | None, cpuid_
     if cpuid_fam_id == 0x19:
         if cpuid_mod_id in range(0x00, 0x10):
             return ProcessorModel.MILAN
-        elif cpuid_mod_id in range(0x10, 0x20) or cpuid_mod_id in range(0xA0, 0xB0):
+        if cpuid_mod_id in range(0x10, 0x20) or cpuid_mod_id in range(0xA0, 0xB0):
             return ProcessorModel.GENOA
-        else:
-            raise ValueError("invalid CPU model ID")
+        raise ValueError("invalid CPU model ID")
     if cpuid_fam_id == 0x1A:
         if cpuid_mod_id in range(0x00, 0x12):
             return ProcessorModel.TURIN
-        else:
-            raise ValueError("invalid CPU model ID")
+        raise ValueError("invalid CPU model ID")
     raise ValueError("invalid CPU family ID")
 
 
@@ -894,5 +892,4 @@ class AttestationReport:
         """Signature hash algorithm."""
         if self.signature_algorithm == SignatureAlgorithm.ECDSA_P384_SHA384:
             return hashes.SHA384()
-        else:
-            raise ValueError(f"Unknown signature hash algorithm: {self.signature_algorithm}")
+        raise ValueError(f"Unknown signature hash algorithm: {self.signature_algorithm}")

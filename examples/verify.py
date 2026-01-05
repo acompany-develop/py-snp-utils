@@ -20,14 +20,14 @@ def main():
         "--report",
         dest="report_path",
         required=True,
-        help=f"Path to SNP attestation report",
+        help="Path to SNP attestation report",
     )
     parser.add_argument(
         "-c",
         "--certs",
         dest="certs_dir",
         required=True,
-        help=f"Directory containing vcek.pem/ask.pem/ark.pem",
+        help="Directory containing vcek.pem/ask.pem/ark.pem",
     )
     parser.add_argument(
         "-p",

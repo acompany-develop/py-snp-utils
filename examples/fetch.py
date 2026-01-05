@@ -19,14 +19,14 @@ def main():
         "--in",
         dest="in_path",
         required=True,
-        help=f"Path to SNP attestation report",
+        help="Path to SNP attestation report",
     )
     parser.add_argument(
         "-o",
         "--outdir",
         dest="outdir",
         required=True,
-        help=f"Output directory to write certs",
+        help="Output directory to write certs",
     )
     parser.add_argument(
         "-p",
