@@ -1,2 +1,6 @@
 [MESSAGES CONTROL]
-disable=C0301,R0904,R1705
+disable=missing-function-docstring,too-many-locals,too-many-public-methods,duplicate-code
+
+[FORMAT]
+max-line-length=200
+indent-string='    '
