@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 """
 pysnputils - Python utilities for AMD SEV-SNP attestation.
 """

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 
 """
 Verify SNP attestation reports and VCEK certificate chains.
 """
+
 from __future__ import annotations
 
 import argparse

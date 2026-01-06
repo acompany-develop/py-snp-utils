@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 
 """
 Example usage of pysnputils.
 """
+
 from __future__ import annotations
 
 import argparse
