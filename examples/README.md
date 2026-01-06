@@ -1,5 +1,7 @@
 # Example CLI tools using pysnputils
 
+This directory includes several command-line tools using pysnputils. These are intended to demonstrate the use of pysnputils, whilst also providing standalone utilities for SEV-SNP attestation verification.
+
 ## Usage
 
 ### Common
@@ -12,7 +14,7 @@ or
 
 ```shell
 # grant permission to execute
-# chmod +x $SCRIPT_PATH
+chmod +x $SCRIPT_PATH
 $SCRIPT_PATH [OPTIONS...]
 ```
 
@@ -74,9 +76,5 @@ python verify.py --report $REPORT_PATH --certs $CERTS_DIR [--processor-model $PR
 
 ### reportV5.bin
 
-- Report Version: 3
+- Report Version: 5
 - Processor Model: Milan
-
-
-
-

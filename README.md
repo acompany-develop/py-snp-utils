@@ -1,20 +1,38 @@
 # py-snp-utils
 
-**py-snp-utils** (`pysnputils`) is a Python library for parsing SNP reports, fetching VCEK certificate chains, and verifying them.
+![SemVer](https://img.shields.io/badge/pysnputils-0.1.0-blue)
+![Python Version](https://img.shields.io/badge/Python-3.12+-blue)
+[![License](https://img.shields.io/badge/License-MIT-red)](/LICENSE)
 
-## Installation
+**py-snp-utils** (`pysnputils`) is a Python library for implementing attestation verification of AMD SEV-SNP confidential VMs. It provides functionality to parse SNP reports, fetch VCEK certificate chains and CRLs, and verify attestation evidences.
+
+## Compatibility
+
+### SEV-SNP Revision
+
+- SEV-SNP Firmware ABI Spec: Rev. 1.58 (May 2025)
+- KDS Interface Spec: Rev. 1.00 (January 2025)
+
+### Tested Environments
+
+- Ubuntu 24.04.1 + AMD64 (x86_64)
+- macOS 15.6.1 + Aarch64
+
+## Getting Started
 
 ### Requirements
 
-- Python 3.12+ (Tested with Python 3.12.7)
+- Python 3.12+
 
-### Install from repository
+### Install from Repository
 
 ```shell
-pip install git+https://github.com/acompany-develop/py-snp-utils
+pip install git+https://github.com/acompany-develop/py-snp-utils.git
 ```
 
-## Usage
+## What's Inside?
+
+### Submodules
 
 The Python module `pysnputils` consists of the following submodules:
 | Submodules | Descriptions |
@@ -22,32 +40,6 @@ The Python module `pysnputils` consists of the following submodules:
 | `types` | attestation report types and parsers |
 | `fetch` | functions to fetch VCEK certificate chains from AMD KDS |
 | `verify` | functions to verify VCEK certificate chains and SNP reports |
-
-### Example code
-
-```python
-from pysnputils.types import AttestationReport
-from pysnputils.fetch import fetch_vcek, fetch_ca, fetch_crl
-
-with open("report.bin", "rb") as f:
-    report_bin = f.read()
-
-# parse report, auto-detect processor model
-report_parsed = AttestationReport.from_bytes(report_bin)
-
-# fetch VCEK cert chain and CRL
-vcek = fetch_vcek(parsed_report)
-ca = fetch_ca(parsed_report)
-ask = ca[0]
-ark = ca[1]
-crl = fetch_crl(parsed_report)
-
-# verify chain of trust
-ok = verify_report_signature(parsed_report, vcek)
-ok &= verify_certs(vcek, ask)
-ok &= verify_certs(ask, ark)
-ok &= verify_certs(ark, ark)
-```
 
 ### CLI Tools / Example Scripts
 
