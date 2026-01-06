@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 """
 AMD SEV-SNP Attestation Report Type Definitions.
 """

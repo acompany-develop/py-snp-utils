@@ -1,6 +1,7 @@
+# SPDX-License-Identifier: MIT
+
 """
-Fetch VCEK certificate chains from AMD KDS.
-AMD KDS Revision: 1.00 (January 2025)
+Fetch VCEK certificate chains and CRLs from AMD KDS.
 """
 
 __all__ = [
