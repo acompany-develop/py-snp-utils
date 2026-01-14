@@ -35,12 +35,31 @@ from cryptography.hazmat.primitives import hashes
 
 # Helper functions
 def get_bit(raw: bytes, bit: int) -> int:
-    """Get a bit from a byte array."""
+    """
+    Get a bit from a byte array.
+    
+    Args:
+        raw: bytes
+        bit: int
+    
+    Returns:
+        int
+    """
     return (int.from_bytes(raw, "little") >> bit) & 1
 
 
 def get_bits(raw: bytes, begin: int, end: int) -> int:
-    """Get bits from a byte array."""
+    """
+    Get bits from a byte array.
+    
+    Args:
+        raw: bytes
+        begin: int
+        end: int
+
+    Returns:
+        int
+    """
     return (int.from_bytes(raw, "little") >> begin) & ((1 << (end - begin)) - 1)
 
 
@@ -81,7 +100,15 @@ class ReportVariant(IntEnum):
 
 # Functions
 def report_version_to_variant(version: int) -> ReportVariant:
-    """Convert a report version to a report variant."""
+    """
+    Convert a report version to a report variant.
+    
+    Args:
+        version: int
+
+    Returns:
+        ReportVariant
+    """
     if version == 2:
         return ReportVariant.V2
     if version in [3, 4]:
@@ -91,14 +118,17 @@ def report_version_to_variant(version: int) -> ReportVariant:
     raise ValueError(f"invalid or unsupported report version: {version}")
 
 
-def detect_processor_model(report_version: int, cpuid_fam_id: int | None, cpuid_mod_id: int | None) -> ProcessorModel:
-    """Detect the processor model from the CPUID family and model."""
-    if report_version < 3:
-        raise ValueError("Processor model could not be determined; update SEV-SNP firmware to bump report version to V3 or later")
-    if cpuid_fam_id is None:
-        raise ValueError("missing CPUID family ID")
-    if cpuid_mod_id is None:
-        raise ValueError("missing CPUID model ID")
+def detect_processor_model(cpuid_fam_id: int, cpuid_mod_id: int) -> ProcessorModel:
+    """
+    Detect the processor model from the CPUID family and model.
+    
+    Args:
+        cpuid_fam_id: int
+        cpuid_mod_id: int
+
+    Returns:
+        ProcessorModel
+    """
     if cpuid_fam_id == 0x19:
         if cpuid_mod_id in range(0x00, 0x10):
             return ProcessorModel.MILAN
@@ -630,7 +660,7 @@ class AttestationReport:
                 raise ValueError("Report version must be 3+ or processor model must be specified")
             cpuid_fam_id = int.from_bytes(raw[0x188:0x189], "little")
             cpuid_mod_id = int.from_bytes(raw[0x189:0x18A], "little")
-            self.processor_model = detect_processor_model(version, cpuid_fam_id, cpuid_mod_id)
+            self.processor_model = detect_processor_model(cpuid_fam_id, cpuid_mod_id)
         else:
             self.processor_model = ProcessorModel(processor_model)
 
