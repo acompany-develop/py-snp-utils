@@ -24,7 +24,6 @@ __all__ = [
     "AttestationReport",
     # Functions
     "report_version_to_variant",
-    "turin_like",
     "detect_processor_model",
 ]
 
@@ -92,23 +91,10 @@ def report_version_to_variant(version: int) -> ReportVariant:
     raise ValueError(f"invalid or unsupported report version: {version}")
 
 
-def turin_like(chip_id: bytes) -> bool:
-    """Determine if the Chip ID is from a Turin-like processor."""
-    if len(chip_id) != 64:
-        raise ValueError("invalid chip ID length: expected 64 bytes, got {len(chip_id)}")
-    if chip_id[8:64] == bytes(56):
-        return True
-    return False
-
-
-def detect_processor_model(report_version: int, cpuid_fam_id: int | None, cpuid_mod_id: int | None, chip_id: bytes) -> ProcessorModel:
-    """Detect the processor model from the CPUID family, model, stepping, and Chip ID."""
+def detect_processor_model(report_version: int, cpuid_fam_id: int | None, cpuid_mod_id: int | None) -> ProcessorModel:
+    """Detect the processor model from the CPUID family and model."""
     if report_version < 3:
-        if chip_id == bytes(64):
-            raise ValueError("chip ID may be masked; check host's MASK_CHIP_ID setting")
-        if turin_like(chip_id):
-            return ProcessorModel.TURIN
-        raise ValueError("Processor model could not be determined; update SEV-SNP firmware to bump report version")
+        raise ValueError("Processor model could not be determined; update SEV-SNP firmware to bump report version to V3 or later")
     if cpuid_fam_id is None:
         raise ValueError("missing CPUID family ID")
     if cpuid_mod_id is None:
@@ -446,14 +432,14 @@ class TcbVersion:
     """
     # Fields
     raw: bytes = bytes(TCB_VERSION_SIZE)
-    turin: bool = False
+    processor_model: ProcessorModel = ProcessorModel.MILAN
 
     # Methods
-    def __init__(self, raw: bytes, turin: bool = False):
+    def __init__(self, raw: bytes, processor_model: ProcessorModel):
         if len(raw) != TCB_VERSION_SIZE:
             raise ValueError(f"Invalid TcbVersion length: expected {TCB_VERSION_SIZE} bytes, got {len(raw)}")
         self.raw = raw
-        self.turin = turin
+        self.processor_model = processor_model
 
     def to_dict(self) -> dict:
         """Convert TcbVersion to a dictionary."""
@@ -467,37 +453,37 @@ class TcbVersion:
 
     # Class Methods
     @classmethod
-    def from_bytes(cls, data: bytes, turin: bool = False) -> "TcbVersion":
+    def from_bytes(cls, data: bytes, processor_model: ProcessorModel) -> "TcbVersion":
         """Create TcbVersion from 8 bytes (64 bits).
         
         Args:
             data: bytes
-            turin: bool (default: False)
+            processor_model: ProcessorModel
 
         Returns:
             TcbVersion
         """
-        return cls(raw=data, turin=turin)
+        return cls(raw=data, processor_model=processor_model)
 
     # Properties
     @property
     def boot_loader(self) -> int:
         """Boot loader version."""
-        if self.turin:
+        if self.processor_model == ProcessorModel.TURIN:
             return int.from_bytes(self.raw[1:2], "little")
         return int.from_bytes(self.raw[0:1], "little")
 
     @property
     def tee(self) -> int:
         """TEE version."""
-        if self.turin:
+        if self.processor_model == ProcessorModel.TURIN:
             return int.from_bytes(self.raw[2:3], "little")
         return int.from_bytes(self.raw[1:2], "little")
 
     @property
     def snp(self) -> int:
         """SNP version."""
-        if self.turin:
+        if self.processor_model == ProcessorModel.TURIN:
             return int.from_bytes(self.raw[3:4], "little")
         return int.from_bytes(self.raw[6:7], "little")
 
@@ -509,7 +495,7 @@ class TcbVersion:
     @property
     def fmc(self) -> int | None:
         """FMC version. Turin or later models only."""
-        if self.turin:
+        if self.processor_model == ProcessorModel.TURIN:
             return int.from_bytes(self.raw[0:1], "little")
         return None
 
@@ -644,8 +630,7 @@ class AttestationReport:
                 raise ValueError("Report version must be 3+ or processor model must be specified")
             cpuid_fam_id = int.from_bytes(raw[0x188:0x189], "little")
             cpuid_mod_id = int.from_bytes(raw[0x189:0x18A], "little")
-            chip_id = raw[0x1A0:0x1E0]
-            self.processor_model = detect_processor_model(version, cpuid_fam_id, cpuid_mod_id, chip_id)
+            self.processor_model = detect_processor_model(version, cpuid_fam_id, cpuid_mod_id)
         else:
             self.processor_model = ProcessorModel(processor_model)
 
@@ -743,8 +728,7 @@ class AttestationReport:
     @property
     def current_tcb(self) -> TcbVersion:
         """Current TCB."""
-        turin = self.processor_model == ProcessorModel.TURIN
-        return TcbVersion.from_bytes(self.raw[0x38:0x40], turin=turin)
+        return TcbVersion.from_bytes(self.raw[0x38:0x40], self.processor_model)
 
     @property
     def platform_info(self) -> PlatformInfo:
@@ -794,8 +778,7 @@ class AttestationReport:
     @property
     def reported_tcb(self) -> TcbVersion:
         """Reported TCB."""
-        turin = self.processor_model == ProcessorModel.TURIN
-        return TcbVersion.from_bytes(self.raw[0x180:0x188], turin=turin)
+        return TcbVersion.from_bytes(self.raw[0x180:0x188], self.processor_model)
 
     @property
     def cpuid_fam_id(self) -> int | None:
@@ -826,8 +809,7 @@ class AttestationReport:
     @property
     def committed_tcb(self) -> TcbVersion:
         """Committed TCB."""
-        turin = self.processor_model == ProcessorModel.TURIN
-        return TcbVersion.from_bytes(self.raw[0x1E0:0x1E8], turin=turin)
+        return TcbVersion.from_bytes(self.raw[0x1E0:0x1E8], self.processor_model)
 
     @property
     def current_build(self) -> int:
@@ -862,8 +844,7 @@ class AttestationReport:
     @property
     def launch_tcb(self) -> TcbVersion:
         """Launch TCB."""
-        turin = self.processor_model == ProcessorModel.TURIN
-        return TcbVersion.from_bytes(self.raw[0x1F0:0x1F8], turin=turin)
+        return TcbVersion.from_bytes(self.raw[0x1F0:0x1F8], self.processor_model)
 
     @property
     def launch_mit_vector(self) -> bytes | None:
