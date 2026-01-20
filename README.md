@@ -8,6 +8,10 @@
 
 ## Compatibility
 
+### Python
+
+- Python 3.12+
+
 ### SEV-SNP Revision
 
 - SEV-SNP Firmware ABI Spec: Rev. 1.58 (May 2025)
@@ -19,12 +23,6 @@
 - macOS 15.6.1 + Aarch64
 
 ## Getting Started
-
-### Requirements
-
-- Python 3.12+
-
-### Install from Repository
 
 ```shell
 pip install git+https://github.com/acompany-develop/py-snp-utils.git
@@ -50,3 +48,7 @@ The `examples/` directory contains scripts that serve as both usage examples and
 | `display.py` | Display SNP attestation report in JSON format |
 | `fetch.py` | Fetch ARK, ASK, VCEK and CRL from AMD KDS in PEM format |
 | `verify.py` | Verify VCEK certificate chain and SNP report signature |
+
+## Contributing
+
+Contributions are welcome! Before contributing, please see [CONTRIBUTING.md](/CONTRIBUTING.md).
