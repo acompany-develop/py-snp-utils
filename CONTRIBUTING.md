@@ -2,12 +2,13 @@
 
 Contributions are welcome! Please follow these guidelines when contributing.
 
-## Contribution Agreement
+## License of Contributions
 
 By contributing to this project, you agree that:
 
 - You have the legal right to provide your contribution (or you have obtained permission from the rights holder).
 - Your contribution may be used as part of this project and may be modified and redistributed as needed.
+- You retain copyright to your contribution.
 - Your contribution is provided under the terms of this project's license (see [LICENSE](/LICENSE)).
 
 ## Bug Reports / Feature Requests
