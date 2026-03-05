@@ -11,8 +11,10 @@ import argparse
 from pathlib import Path
 
 from cryptography.hazmat.primitives.serialization import Encoding
+
+from pysnputils.fetch import fetch_ca, fetch_crl, fetch_vcek
 from pysnputils.types import AttestationReport, ProcessorModel
-from pysnputils.fetch import fetch_vcek, fetch_ca, fetch_crl
+
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch VCEK/ASK/ARK/CRL from AMD KDS and write them to a directory.")
@@ -61,6 +63,7 @@ def main():
     crl = fetch_crl(parsed_report)
     with open(outdir / "crl.pem", "wb") as f:
         f.write(crl.public_bytes(encoding=Encoding.PEM))
+
 
 if __name__ == "__main__":
     main()

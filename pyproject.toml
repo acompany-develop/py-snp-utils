@@ -6,12 +6,55 @@ build-backend = "setuptools.build_meta"
 name = "pysnputils"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 dependencies = [
   "requests >= 2.32.5",
   "cryptography >= 46.0.5"
 ]
 
+[project.optional-dependencies]
+dev = [
+  "ruff >= 0.15.4",
+  "pytest >= 9.0.2",
+]
+
 [tool.setuptools.packages.find]
-include = ["pysnputils*"]
+include = ["pysnputils"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# ---------- Ruff ----------
+[tool.ruff]
+target-version = "py312"
+line-length = 200
+indent-width = 4
+extend-exclude = ["build", "venv"]
+
+[tool.ruff.lint]
+select = [
+  "E",    # pycodestyle errors
+  "W",    # pycodestyle warnings
+  "F",    # pyflakes
+  "I",    # isort
+  "UP",   # pyupgrade
+  "B",    # flake8-bugbear
+  "SIM",  # flake8-simplify
+  "PL",   # pylint rules
+]
+ignore = [
+  "PLR0913",  # too-many-arguments
+  "PLR0914",  # too-many-locals
+  "PLR0917",  # too-many-positional-arguments
+  "PLR0904",  # too-many-public-methods
+  "PLR2004",  # magic-value-comparison (spec-defined constants)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**" = ["PLW1510"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

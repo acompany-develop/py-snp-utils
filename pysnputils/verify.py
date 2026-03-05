@@ -13,9 +13,10 @@ __all__ = [
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 from cryptography.x509.oid import SignatureAlgorithmOID
-from cryptography.hazmat.primitives import hashes
+
 from pysnputils.types import AttestationReport
 
 
@@ -51,11 +52,10 @@ def verify_certs(subject_cert: x509.Certificate, issuer_cert: x509.Certificate) 
         elif isinstance(issuer_pubkey, ec.EllipticCurvePublicKey):
             issuer_pubkey.verify(sig, tbs, ec.ECDSA(hash_alg))
         # Key type: Other
+        elif hash_alg is None:
+            issuer_pubkey.verify(sig, tbs)
         else:
-            if hash_alg is None:
-                issuer_pubkey.verify(sig, tbs)
-            else:
-                issuer_pubkey.verify(sig, tbs, hash_alg)
+            issuer_pubkey.verify(sig, tbs, hash_alg)
         # If no exception was raised, the certificate is valid
         return True
     except InvalidSignature:

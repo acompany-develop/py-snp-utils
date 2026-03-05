@@ -14,8 +14,10 @@ __all__ = [
 ]
 
 import base64
+
 import requests
 from cryptography import x509
+
 from pysnputils.types import AttestationReport
 
 # AMD KDS Base URL
@@ -23,6 +25,7 @@ AMD_KDS_BASE_URL = "https://kdsintf.amd.com"
 
 # Timeout
 DEFAULT_TIMEOUT = 10
+
 
 # AMD KDS API Endpoints
 def get_vcek_url(report: AttestationReport) -> str:
@@ -43,10 +46,10 @@ def get_vcek_url(report: AttestationReport) -> str:
 
     if processor_model == "Turin":
         fmc = report.reported_tcb.fmc
-        hwid = report.chip_id.hex()[0:16] # first 8 octets = 16 hex characters
+        hwid = report.chip_id.hex()[0:16]  # first 8 octets = 16 hex characters
         return f"{AMD_KDS_BASE_URL}/vcek/v1/{processor_model}/{hwid}?fmcSPL={fmc}&blSPL={bl}&teeSPL={tee}&snpSPL={snp}&ucodeSPL={ucode}"
 
-    hwid = report.chip_id.hex() # full 64 octets = 128 hex characters
+    hwid = report.chip_id.hex()  # full 64 octets = 128 hex characters
     return f"{AMD_KDS_BASE_URL}/vcek/v1/{processor_model}/{hwid}?blSPL={bl}&teeSPL={tee}&snpSPL={snp}&ucodeSPL={ucode}"
 
 

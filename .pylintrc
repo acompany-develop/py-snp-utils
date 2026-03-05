@@ -1,6 +1,0 @@
-[MESSAGES CONTROL]
-disable=missing-function-docstring,too-many-arguments,too-many-locals,too-many-positional-arguments,too-many-public-methods,duplicate-code
-
-[FORMAT]
-max-line-length=200
-indent-string='    '

@@ -30,18 +30,20 @@ __all__ = [
 
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum
-from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+
 
 # Helper functions
 def get_bit(raw: bytes, bit: int) -> int:
     """
     Get a bit from a byte array.
-    
+
     Args:
         raw: bytes
         bit: int
-    
+
     Returns:
         int
     """
@@ -51,7 +53,7 @@ def get_bit(raw: bytes, bit: int) -> int:
 def get_bits(raw: bytes, begin: int, end: int) -> int:
     """
     Get bits from a byte array.
-    
+
     Args:
         raw: bytes
         begin: int
@@ -66,11 +68,13 @@ def get_bits(raw: bytes, begin: int, end: int) -> int:
 # Enums
 class SignatureAlgorithm(IntEnum):
     """Signature algorithm used in the attestation report."""
+
     ECDSA_P384_SHA384 = 1
 
 
 class SigningKey(IntEnum):
     """The key used to sign the attestation report."""
+
     VCEK = 0
     VLEK = 1
     NONE = 7
@@ -78,12 +82,14 @@ class SigningKey(IntEnum):
 
 class MaskChipId(IntEnum):
     """Chip ID masking options."""
+
     UNMASKED = 0
     MASKED = 1
 
 
 class ProcessorModel(StrEnum):
     """Host processor model."""
+
     MILAN = "Milan"
     GENOA = "Genoa"
     BERGAMO = "Bergamo"
@@ -93,6 +99,7 @@ class ProcessorModel(StrEnum):
 
 class ReportVariant(IntEnum):
     """Report variant."""
+
     V2 = 2
     V3 = 3
     V5 = 5
@@ -102,7 +109,7 @@ class ReportVariant(IntEnum):
 def report_version_to_variant(version: int) -> ReportVariant:
     """
     Convert a report version to a report variant.
-    
+
     Args:
         version: int
 
@@ -121,7 +128,7 @@ def report_version_to_variant(version: int) -> ReportVariant:
 def detect_processor_model(cpuid_fam_id: int, cpuid_mod_id: int) -> ProcessorModel:
     """
     Detect the processor model from the CPUID family and model.
-    
+
     Args:
         cpuid_fam_id: int
         cpuid_mod_id: int
@@ -145,11 +152,12 @@ def detect_processor_model(cpuid_fam_id: int, cpuid_mod_id: int) -> ProcessorMod
 # Types
 GUEST_POLICY_SIZE: int = 8
 
+
 @dataclass
 class GuestPolicy:
     """
     GUEST_POLICY bitfield.
-    
+
     | Bit(s) | Name | Description |
     |--------|------|-------------|
     | 0-7    | ABI_MINOR | ABI minor version |
@@ -166,6 +174,7 @@ class GuestPolicy:
     | 25     | PAGE_SWAP_DISABLED | Guest access to page swap commands (SNP_PAGE_MOVE, SNP_SWAP_OUT and SNP_SWAP_IN) is required to be disabled (1) or not (0). Report Version 5 or later only. |
     | 26-63  | -     | Reserved. Must be 0. |
     """
+
     # Fields
     raw: bytes
     report_version: int
@@ -197,7 +206,7 @@ class GuestPolicy:
     @classmethod
     def from_bytes(cls, raw: bytes, report_version: int = 5) -> "GuestPolicy":
         """Create GuestPolicy from 8 bytes (64 bits).
-        
+
         Args:
             raw: bytes
             report_version: int (default: 5)
@@ -268,11 +277,12 @@ class GuestPolicy:
 
 PLATFORM_INFO_SIZE: int = 8
 
+
 @dataclass
 class PlatformInfo:
     """
     PLATFORM_INFO bitfield.
-    
+
     | Bit(s) | Name | Description |
     |--------|------|-------------|
     | 0      | SMT_EN | Symmetric Multi-Threading (SMT) is enabled (1) or not (0). |
@@ -285,6 +295,7 @@ class PlatformInfo:
     | 7      | TIO_EN   | SEV-TIO is enabled (1) or not (0). Report Version 5 or later only. |
     | 8-63   | -        | Reserved |
     """
+
     # Fields
     raw: bytes
     report_version: int
@@ -292,9 +303,7 @@ class PlatformInfo:
     # Methods
     def __init__(self, raw: bytes, report_version: int = 5):
         if len(raw) != PLATFORM_INFO_SIZE:
-            raise ValueError(
-                f"Invalid PlatformInfo length: expected {PLATFORM_INFO_SIZE} bytes, got {len(raw)}"
-            )
+            raise ValueError(f"Invalid PlatformInfo length: expected {PLATFORM_INFO_SIZE} bytes, got {len(raw)}")
         self.raw = raw
         self.report_version = report_version
 
@@ -318,7 +327,7 @@ class PlatformInfo:
     @classmethod
     def from_bytes(cls, data: bytes, report_version: int = 5) -> "PlatformInfo":
         """Create PlatformInfo from 8 bytes (64 bits).
-        
+
         Args:
             data: bytes
             report_version: int (default: 5)
@@ -371,11 +380,12 @@ class PlatformInfo:
 
 KEY_INFO_SIZE: int = 4
 
+
 @dataclass
 class KeyInfo:
     """
     KEY_INFO bitfield.
-    
+
     | Bit(s) | Name          | Description |
     |--------|---------------|-------------|
     | 0      | AUTHOR_KEY_EN | The digest of the author key is present in AUTHOR_KEY_DIGEST (1) or not (0). |
@@ -383,15 +393,14 @@ class KeyInfo:
     | 2-4    | SIGNING_KEY   | The signing key selection (0=VCEK, 1=VLEK, 2-6: Reserved, 7: None) |
     | 5-31   | -             | Reserved. Must be 0. |
     """
+
     # Fields
     raw: bytes
 
     # Methods
     def __init__(self, raw: bytes):
         if len(raw) != KEY_INFO_SIZE:
-            raise ValueError(
-                f"Invalid KeyInfo length: expected {KEY_INFO_SIZE} bytes, got {len(raw)}"
-            )
+            raise ValueError(f"Invalid KeyInfo length: expected {KEY_INFO_SIZE} bytes, got {len(raw)}")
         self.raw = raw
 
     def to_dict(self) -> dict:
@@ -406,7 +415,7 @@ class KeyInfo:
     @classmethod
     def from_bytes(cls, data: bytes) -> "KeyInfo":
         """Create KeyInfo from 4 bytes (32 bits).
-        
+
         Args:
             data: bytes
 
@@ -431,14 +440,14 @@ class KeyInfo:
         return SigningKey(get_bits(self.raw, 2, 5))
 
 
-
 TCB_VERSION_SIZE: int = 8
+
 
 @dataclass
 class TcbVersion:
     """
     TCB_VERSION structure.
-    
+
     Each component represents a version number for different parts of the TCB.
 
     Pre-Turin:
@@ -460,6 +469,7 @@ class TcbVersion:
     | 32-55  | RESERVED    |
     | 56-63  | MICROCODE   |
     """
+
     # Fields
     raw: bytes = bytes(TCB_VERSION_SIZE)
     processor_model: ProcessorModel = ProcessorModel.MILAN
@@ -485,7 +495,7 @@ class TcbVersion:
     @classmethod
     def from_bytes(cls, data: bytes, processor_model: ProcessorModel) -> "TcbVersion":
         """Create TcbVersion from 8 bytes (64 bits).
-        
+
         Args:
             data: bytes
             processor_model: ProcessorModel
@@ -532,17 +542,19 @@ class TcbVersion:
 
 ECDSA_SIGNATURE_SIZE: int = 0x200
 
+
 @dataclass
 class EcdsaSignature:
     """
     ECDSA_SIGNATURE structure.
-    
+
     | Offset | Size  | Name     | Description |
     |--------|-------|----------|-------------|
     | 0x0    | 0x48  | SIG_R    | Signature r component in zero-extended little-endian |
     | 0x48   | 0x48  | SIG_S    | Signature s component in zero-extended little-endian |
     | 0x90   | 0x170 | RESERVED | Reserved. Must be 0. |
     """
+
     # Fields
     raw: bytes = bytes(ECDSA_SIGNATURE_SIZE)
 
@@ -569,7 +581,7 @@ class EcdsaSignature:
     @classmethod
     def from_bytes(cls, data: bytes) -> "EcdsaSignature":
         """Create EcdsaSignature from 512 bytes.
-        
+
         Args:
             data: bytes
 
@@ -592,14 +604,15 @@ class EcdsaSignature:
 
 SNP_ATTESTATION_REPORT_LEN: int = 1184
 
+
 @dataclass
 class AttestationReport:
     """
     AMD SEV-SNP Attestation Report structure.
-    
+
     This structure contains the attestation report returned by the SNP firmware
     in response to a guest request.
-    
+
     Total size: 1184 bytes
 
     Offsets/Sizes are in bytes. Little-endian order.
@@ -645,6 +658,7 @@ class AttestationReport:
     | 0x208  | 152  | -                  | Reserved |
     | 0x2A0  | 512  | SIGNATURE          | ECDSA P-384 with SHA-384 signature |
     """
+
     # Fields
     raw: bytes = bytes(SNP_ATTESTATION_REPORT_LEN)
     processor_model: ProcessorModel = ProcessorModel.MILAN
@@ -773,7 +787,7 @@ class AttestationReport:
     @property
     def report_data(self) -> bytes:
         """Report data (64 bytes)."""
-        return self.raw[0x50:0x8C]
+        return self.raw[0x50:0x90]
 
     @property
     def measurement(self) -> bytes:

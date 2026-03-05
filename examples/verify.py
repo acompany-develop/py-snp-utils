@@ -12,8 +12,10 @@ import sys
 from pathlib import Path
 
 from cryptography import x509
-from pysnputils.verify import verify_certs, verify_report_signature
+
 from pysnputils.types import AttestationReport, ProcessorModel
+from pysnputils.verify import verify_certs, verify_report_signature
+
 
 def main():
     parser = argparse.ArgumentParser(description="Verify SNP report signature and VCEK certificate chain.")
@@ -79,6 +81,7 @@ def main():
     ok &= ark_ok
 
     sys.exit(0 if ok else 1)
+
 
 if __name__ == "__main__":
     main()

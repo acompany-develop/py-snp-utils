@@ -1,7 +1,7 @@
 # py-snp-utils
 
 ![SemVer](https://img.shields.io/badge/pysnputils-0.1.0-blue)
-![Python Version](https://img.shields.io/badge/Python-3.12+-blue)
+![Python Version](https://img.shields.io/badge/Python-3.11+-blue)
 [![License](https://img.shields.io/badge/License-MIT-red)](/LICENSE)
 
 **py-snp-utils** (`pysnputils`) is a Python library for implementing attestation verification of AMD SEV-SNP confidential VMs. It provides functionality to parse SNP reports, fetch VCEK certificate chains and CRLs, and verify attestation evidences.
@@ -10,7 +10,7 @@
 
 ### Python
 
-- Python 3.12+
+- Python 3.11+
 
 ### SEV-SNP Revision
 
@@ -33,8 +33,9 @@ pip install git+https://github.com/acompany-develop/py-snp-utils.git
 ### Submodules
 
 The Python module `pysnputils` consists of the following submodules:
+
 | Submodules | Descriptions |
-| :- | :- |
+| ---------- | ------------ |
 | `types` | attestation report types and parsers |
 | `fetch` | functions to fetch VCEK certificate chains from AMD KDS |
 | `verify` | functions to verify VCEK certificate chains and SNP reports |
@@ -44,7 +45,7 @@ The Python module `pysnputils` consists of the following submodules:
 The `examples/` directory contains scripts that serve as both usage examples and command-line tools.
 
 | Script | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `display.py` | Display SNP attestation report in JSON format |
 | `fetch.py` | Fetch ARK, ASK, VCEK and CRL from AMD KDS in PEM format |
 | `verify.py` | Verify VCEK certificate chain and SNP report signature |
