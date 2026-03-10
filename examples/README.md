@@ -1,6 +1,8 @@
 # Example CLI tools using pysnputils
 
-This directory includes several command-line tools using pysnputils. These are intended to demonstrate the use of pysnputils, whilst also providing standalone utilities for SEV-SNP attestation verification.
+This directory includes several command-line tools using pysnputils. These are
+intended to demonstrate the use of pysnputils, whilst also providing standalone
+utilities for SEV-SNP attestation verification.
 
 ## Usage
 
@@ -27,7 +29,8 @@ python display.py --in $REPORT_PATH [--processor-model $PROCESSOR_MODEL]
 ```
 
 - `-i, --in`: Path to SNP attestation report
-- `-p, --processor-model`: Specify processor model (default: autodetect). For V2 reports, processor model must be specified.
+- `-p, --processor-model`: Specify processor model (default: autodetect).
+  For V2 reports, processor model must be specified.
 
 ### fetch
 
@@ -41,7 +44,8 @@ python fetch.py --in $REPORT_PATH --outdir $CERTS_DIR [--processor-model $PROCES
 
 - `-i, --in`: Path to SNP attestation report
 - `-o, --outdir`: Output directory to write certs
-- `-p, --processor-model`: Specify processor model (default: autodetect). For V2 reports, processor model must be specified.
+- `-p, --processor-model`: Specify processor model (default: autodetect).
+  For V2 reports, processor model must be specified.
 
 ### verify
 
@@ -55,15 +59,20 @@ python verify.py --report $REPORT_PATH --certs $CERTS_DIR [--processor-model $PR
 
 - `-r, --report`: Path to SNP attestation report
 - `-c, --certs`: Directory containing vcek.pem/ask.pem/ark.pem
-- `-p, --processor-model`: Specify processor model (default: autodetect). For V2 reports, processor model must be specified.
+- `-p, --processor-model`: Specify processor model (default: autodetect).
+  For V2 reports, processor model must be specified.
 
 ## Notes
 
-- **`-p/--processor-model` is optional**: If omitted, it will attempt to automatically detect the processor model from the report.
+- **`-p/--processor-model` is optional**: If omitted, it will attempt to
+  automatically detect the processor model from the report.
   - Automatic detection is supported from report version 3 or later.
-  - Report version 2 does not support automatic detection. `-p/--processor-model` must be specified.
-- **`fetch.py`**: requires network access to AMD KDS. It writes `vcek.pem`, `ask.pem`, `ark.pem`, and `crl.pem` into `$CERTS_DIR`.
-- **`verify.py`**: expects `$CERTS_DIR` to contain `vcek.pem`, `ask.pem`, and `ark.pem`.
+  - Report version 2 does not support automatic detection. The flag
+    `-p/--processor-model` must be specified.
+- **`fetch.py`**: requires network access to AMD KDS. It writes `vcek.pem`,
+  `ask.pem`, `ark.pem`, and `crl.pem` into `$CERTS_DIR`.
+- **`verify.py`**: expects `$CERTS_DIR` to contain `vcek.pem`, `ask.pem`, and
+  `ark.pem`.
 
 ## Sample reports
 

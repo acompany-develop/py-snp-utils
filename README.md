@@ -4,7 +4,10 @@
 ![Python Version](https://img.shields.io/badge/Python-3.11+-blue)
 [![License](https://img.shields.io/badge/License-MIT-red)](/LICENSE)
 
-**py-snp-utils** (`pysnputils`) is a Python library for implementing attestation verification of AMD SEV-SNP confidential VMs. It provides functionality to parse SNP reports, fetch VCEK certificate chains and CRLs, and verify attestation evidences.
+**py-snp-utils** (`pysnputils`) is a Python library for implementing
+attestation verification of AMD SEV-SNP confidential VMs. It provides
+functionality to parse SNP reports, fetch VCEK certificate chains and CRLs, and
+verify attestation evidences.
 
 ## Compatibility
 
@@ -28,7 +31,7 @@
 pip install git+https://github.com/acompany-develop/py-snp-utils.git
 ```
 
-## What's Inside?
+## What's Inside
 
 ### Submodules
 
@@ -42,7 +45,8 @@ The Python module `pysnputils` consists of the following submodules:
 
 ### CLI Tools / Example Scripts
 
-The `examples/` directory contains scripts that serve as both usage examples and command-line tools.
+The `examples/` directory contains scripts that serve as both usage examples
+and command-line tools.
 
 | Script | Description |
 | ------ | ----------- |
