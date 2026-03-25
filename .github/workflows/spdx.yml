@@ -15,7 +15,7 @@ jobs:
   check-spdx-headers:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: enarx/spdx@master
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: enarx/spdx@d4020ee98e3101dd487c5184f27c6a6fb4f88709 # master
       with:
         licenses: MIT
