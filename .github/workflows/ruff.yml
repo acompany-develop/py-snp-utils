@@ -1,8 +1,18 @@
 name: Ruff
 
 on:
-  push:
   pull_request:
+    paths:
+      - '**/*.py'
+      - 'pyproject.toml'
+      - '.github/workflows/ruff.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.py'
+      - 'pyproject.toml'
+      - '.github/workflows/ruff.yml'
   workflow_dispatch:
 
 permissions:
