@@ -9,6 +9,7 @@ __all__ = [
     "SNP_ATTESTATION_REPORT_LEN",
     "ECDSA_SIGNATURE_SIZE",
     "TCB_VERSION_SIZE",
+    "ETCB_VERSION_SIZE",
     "KEY_INFO_SIZE",
     "GUEST_POLICY_SIZE",
     "PLATFORM_INFO_SIZE",
@@ -20,6 +21,7 @@ __all__ = [
     "PlatformInfo",
     "KeyInfo",
     "TcbVersion",
+    "ETcbVersion",
     "EcdsaSignature",
     "AttestationReport",
     # Functions
@@ -95,6 +97,7 @@ class ProcessorModel(StrEnum):
     BERGAMO = "Bergamo"
     SIENA = "Siena"
     TURIN = "Turin"
+    VENICE = "Venice"
 
 
 class ReportVariant(IntEnum):
@@ -103,6 +106,7 @@ class ReportVariant(IntEnum):
     V2 = 2
     V3 = 3
     V5 = 5
+    V6 = 6
 
 
 # Functions
@@ -122,6 +126,8 @@ def report_version_to_variant(version: int) -> ReportVariant:
         return ReportVariant.V3
     if version == 5:
         return ReportVariant.V5
+    if version == 6:
+        return ReportVariant.V6
     raise ValueError(f"invalid or unsupported report version: {version}")
 
 
@@ -139,12 +145,16 @@ def detect_processor_model(cpuid_fam_id: int, cpuid_mod_id: int) -> ProcessorMod
     if cpuid_fam_id == 0x19:
         if cpuid_mod_id in range(0x00, 0x10):
             return ProcessorModel.MILAN
-        if cpuid_mod_id in range(0x10, 0x20) or cpuid_mod_id in range(0xA0, 0xB0):
+        if cpuid_mod_id in range(0x10, 0x20):
             return ProcessorModel.GENOA
+        if cpuid_mod_id in range(0xA0, 0xB0):
+            return ProcessorModel.SIENA
         raise ValueError("invalid CPU model ID")
     if cpuid_fam_id == 0x1A:
-        if cpuid_mod_id in range(0x00, 0x12):
+        if cpuid_mod_id in range(0x00, 0x20):
             return ProcessorModel.TURIN
+        if cpuid_mod_id in range(0x50, 0x60):
+            return ProcessorModel.VENICE
         raise ValueError("invalid CPU model ID")
     raise ValueError("invalid CPU family ID")
 
@@ -468,6 +478,13 @@ class TcbVersion:
     | 24-31  | SNP         |
     | 32-55  | RESERVED    |
     | 56-63  | MICROCODE   |
+
+    Venice"
+    | Bit(s) | Field       |
+    | 0-7    | FMC         |
+    | 8-15   | TEE         |
+    | 16-23  | SNP         |
+    | 24-63  | RESERVED    |
     """
 
     # Fields
@@ -507,10 +524,12 @@ class TcbVersion:
 
     # Properties
     @property
-    def boot_loader(self) -> int:
+    def boot_loader(self) -> int | None:
         """Boot loader version."""
         if self.processor_model == ProcessorModel.TURIN:
             return int.from_bytes(self.raw[1:2], "little")
+        if self.processor_model == ProcessorModel.VENICE:
+            return None
         return int.from_bytes(self.raw[0:1], "little")
 
     @property
@@ -525,19 +544,163 @@ class TcbVersion:
         """SNP version."""
         if self.processor_model == ProcessorModel.TURIN:
             return int.from_bytes(self.raw[3:4], "little")
+        if self.processor_model == ProcessorModel.VENICE:
+            return int.from_bytes(self.raw[2:3], "little")
         return int.from_bytes(self.raw[6:7], "little")
 
     @property
-    def microcode(self) -> int:
+    def microcode(self) -> int | None:
         """Microcode version."""
+        if self.processor_model == ProcessorModel.VENICE:
+            return None
         return int.from_bytes(self.raw[7:8], "little")
 
     @property
     def fmc(self) -> int | None:
         """FMC version. Turin or later models only."""
-        if self.processor_model == ProcessorModel.TURIN:
+        if self.processor_model in [ProcessorModel.TURIN, ProcessorModel.VENICE]:
             return int.from_bytes(self.raw[0:1], "little")
         return None
+
+
+ETCB_VERSION_SIZE: int = 32
+
+
+@dataclass
+class ETcbVersion:
+    """
+    ETCB_VERSION structure. Available since Guest ABI Rev. 1.59.
+
+    | Bit(s)  | Field                |
+    |---------|----------------------|
+    | 0-7     | IP_KEY_MANAGER (ASP) |
+    | 8-15    | MP1                  |
+    | 16-23   | ART_FMC              |
+    | 24-31   | ART_RT               |
+    | 32-39   | HAD_DRIVER (ASP)     |
+    | 40-47   | BOOT_DRIVER (ASP)    |
+    | 48-55   | PRE_ESID (ASP)       |
+    | 56-63   | TMPM                 |
+    | 64-71   | MICROCODE            |
+    | 72-79   | SOC_DRIVER (ASP)     |
+    | 80-87   | ASP_OS_DRIVER (ASP)  |
+    | 88-95   | FHP_DRIVER (ASP)     |
+    | 96-103  | DPE_DRIVER (ASP)     |
+    | 104-111 | AMD Root Guest (ARG) |
+    | 112-255 | RESERVED             |
+    """
+
+    # Fields
+    raw: bytes = bytes(ETCB_VERSION_SIZE)
+
+    # Methods
+    def __init__(self, raw: bytes):
+        if len(raw) != ETCB_VERSION_SIZE:
+            raise ValueError(f"Invalid ETcbVersion length: expected {ETCB_VERSION_SIZE} bytes, got {len(raw)}")
+        self.raw = raw
+
+    def to_dict(self) -> dict:
+        """Convert ETcbVersion to a dictionary."""
+        return {
+            "ip_key_manager": self.ip_key_manager,
+            "mp1": self.mp1,
+            "art_fmc": self.art_fmc,
+            "art_rt": self.art_rt,
+            "had_driver": self.had_driver,
+            "boot_driver": self.boot_driver,
+            "pre_esid": self.pre_esid,
+            "tmpm": self.tmpm,
+            "microcode": self.microcode,
+            "soc_driver": self.soc_driver,
+            "asp_os_driver": self.asp_os_driver,
+            "fhp_driver": self.fhp_driver,
+            "dpe_driver": self.dpe_driver,
+            "arg": self.arg,
+        }
+
+    # Class Methods
+    @classmethod
+    def from_bytes(cls, data: bytes) -> "ETcbVersion":
+        """Create ETcbVersion from 32 bytes (256 bits).
+
+        Args:
+            data: bytes
+
+        Returns:
+            ETcbVersion
+        """
+        return cls(raw=data)
+
+    # Properties
+    @property
+    def ip_key_manager(self) -> int:
+        """IP Key Manager version."""
+        return int.from_bytes(self.raw[0:1], "little")
+
+    @property
+    def mp1(self) -> int:
+        """Power Management firmware version."""
+        return int.from_bytes(self.raw[1:2], "little")
+
+    @property
+    def art_fmc(self) -> int:
+        """AMD Root of Trust (ART) FMC version."""
+        return int.from_bytes(self.raw[2:3], "little")
+
+    @property
+    def art_rt(self) -> int:
+        """AMD Root of Trust (ART) version."""
+        return int.from_bytes(self.raw[3:4], "little")
+
+    @property
+    def had_driver(self) -> int:
+        """High Availability and Debuggability (HAD) firmware version."""
+        return int.from_bytes(self.raw[4:5], "little")
+
+    @property
+    def boot_driver(self) -> int:
+        """Driver boot firmware version."""
+        return int.from_bytes(self.raw[5:6], "little")
+
+    @property
+    def pre_esid(self) -> int:
+        """PreEsid driver firmware version."""
+        return int.from_bytes(self.raw[6:7], "little")
+
+    @property
+    def tmpm(self) -> int:
+        """TMPM firmware version."""
+        return int.from_bytes(self.raw[7:8], "little")
+
+    @property
+    def microcode(self) -> int:
+        """Microcode version. Security Patch Level (SPL) of all codes."""
+        return int.from_bytes(self.raw[8:9], "little")
+
+    @property
+    def soc_driver(self) -> int:
+        """SoC driver firmware version."""
+        return int.from_bytes(self.raw[9:10], "little")
+
+    @property
+    def asp_os_driver(self) -> int:
+        """ASP OS driver version."""
+        return int.from_bytes(self.raw[10:11], "little")
+
+    @property
+    def fhp_driver(self) -> int:
+        """FHP driver version."""
+        return int.from_bytes(self.raw[11:12], "little")
+
+    @property
+    def dpe_driver(self) -> int:
+        """DPE driver version."""
+        return int.from_bytes(self.raw[12:13], "little")
+
+    @property
+    def arg(self) -> int:
+        """Security Version Number (SVN) of AMD Root Guest (ARG)."""
+        return int.from_bytes(self.raw[13:14], "little")
 
 
 ECDSA_SIGNATURE_SIZE: int = 0x200
@@ -655,7 +818,11 @@ class AttestationReport:
     | 0x1F0  | 8    | LAUNCH_TCB         | Launch TCB |
     | 0x1F8  | 8    | LAUNCH_MIT_VECTOR  | Launch mitigation vector. Only available in Report Version 5 or later. |
     | 0x200  | 8    | CURRENT_MIT_VECTOR | Current mitigation vector. Only available in Report Version 5 or later. |
-    | 0x208  | 152  | -                  | Reserved |
+    | 0x208  | 24   | -                  | Reserved |
+    | 0x220  | 32   | CURRENT_ETCB       | Current Extended TCB. Only available in Report Version 6 or later. |
+    | 0x240  | 32   | LAUNCH_ETCB        | Launch Extended TCB. Only available in Report Version 6 or later. |
+    | 0x260  | 32   | COMMITTED_ETCB     | Commited Extended TCB. Only available in Report Version 6 or later. |
+    | 0x280  | 32   | -                  | Reserved |
     | 0x2A0  | 512  | SIGNATURE          | ECDSA P-384 with SHA-384 signature |
     """
 
@@ -713,6 +880,9 @@ class AttestationReport:
             "launch_tcb": self.launch_tcb.to_dict(),
             "launch_mit_vector": self.launch_mit_vector.hex() if self.version >= 5 else None,
             "current_mit_vector": self.current_mit_vector.hex() if self.version >= 5 else None,
+            "current_etcb": self.current_etcb.to_dict() if self.version >= 6 else None,
+            "launch_etcb": self.launch_etcb.to_dict() if self.version >= 6 else None,
+            "committed_etcb": self.committed_etcb.to_dict() if self.version >= 6 else None,
             "signature": self.signature.to_dict(),
         }
 
@@ -903,6 +1073,27 @@ class AttestationReport:
         if self.version < 5:
             return None
         return self.raw[0x200:0x208]
+
+    @property
+    def current_etcb(self) -> ETcbVersion | None:
+        """Current Extended TCB. Report Version 6 or later only."""
+        if self.version < 6:
+            return None
+        return ETcbVersion.from_bytes(self.raw[0x220:0x240])
+
+    @property
+    def launch_etcb(self) -> ETcbVersion | None:
+        """Launch Extended TCB. Report Version 6 or later only."""
+        if self.version < 6:
+            return None
+        return ETcbVersion.from_bytes(self.raw[0x240:0x260])
+
+    @property
+    def committed_etcb(self) -> ETcbVersion | None:
+        """Committed Extended TCB. Report Version 6 or later only."""
+        if self.version < 6:
+            return None
+        return ETcbVersion.from_bytes(self.raw[0x260:0x280])
 
     @property
     def signature(self) -> EcdsaSignature:
