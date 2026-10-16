@@ -44,7 +44,7 @@ def get_vcek_url(report: AttestationReport) -> str:
     snp = report.reported_tcb.snp
     ucode = report.reported_tcb.microcode
 
-    if processor_model == "Turin":
+    if processor_model in ["Turin", "Venice"]:
         fmc = report.reported_tcb.fmc
         hwid = report.chip_id.hex()[0:16]  # first 8 octets = 16 hex characters
         return f"{AMD_KDS_BASE_URL}/vcek/v1/{processor_model}/{hwid}?fmcSPL={fmc}&blSPL={bl}&teeSPL={tee}&snpSPL={snp}&ucodeSPL={ucode}"

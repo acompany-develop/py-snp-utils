@@ -10,11 +10,13 @@ from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 
 from pysnputils.types import (
     ECDSA_SIGNATURE_SIZE,
+    ETCB_VERSION_SIZE,
     GUEST_POLICY_SIZE,
     PLATFORM_INFO_SIZE,
     TCB_VERSION_SIZE,
     AttestationReport,
     EcdsaSignature,
+    ETcbVersion,
     GuestPolicy,
     KeyInfo,
     PlatformInfo,
@@ -77,6 +79,7 @@ class TestEnums:
         assert ReportVariant.V2 == 2
         assert ReportVariant.V3 == 3
         assert ReportVariant.V5 == 5
+        assert ReportVariant.V6 == 6
 
 
 # ---- report_version_to_variant -----------------------------------------------
@@ -90,12 +93,13 @@ class TestReportVersionToVariant:
             (3, ReportVariant.V3),
             (4, ReportVariant.V3),
             (5, ReportVariant.V5),
+            (6, ReportVariant.V6),
         ],
     )
     def test_valid(self, version, expected):
         assert report_version_to_variant(version) == expected
 
-    @pytest.mark.parametrize("version", [0, 1, 6, 100])
+    @pytest.mark.parametrize("version", [0, 1, 7, 100])
     def test_invalid(self, version):
         with pytest.raises(ValueError, match="invalid or unsupported"):
             report_version_to_variant(version)
@@ -111,12 +115,18 @@ class TestDetectProcessorModel:
             (0x19, 0x01, ProcessorModel.MILAN),
             (0x19, 0x00, ProcessorModel.MILAN),
             (0x19, 0x0F, ProcessorModel.MILAN),
+            (0x19, 0x10, ProcessorModel.GENOA),
             (0x19, 0x11, ProcessorModel.GENOA),
             (0x19, 0x1F, ProcessorModel.GENOA),
-            (0x19, 0xA0, ProcessorModel.GENOA),
-            (0x19, 0xAF, ProcessorModel.GENOA),
+            (0x19, 0xA0, ProcessorModel.SIENA),
+            (0x19, 0xAF, ProcessorModel.SIENA),
             (0x1A, 0x00, ProcessorModel.TURIN),
+            (0x1A, 0x0F, ProcessorModel.TURIN),
+            (0x1A, 0x10, ProcessorModel.TURIN),
             (0x1A, 0x11, ProcessorModel.TURIN),
+            (0x1A, 0x1F, ProcessorModel.TURIN),
+            (0x1A, 0x50, ProcessorModel.VENICE),
+            (0x1A, 0x5F, ProcessorModel.VENICE),
         ],
     )
     def test_valid(self, fam, mod, expected):
@@ -126,13 +136,15 @@ class TestDetectProcessorModel:
         with pytest.raises(ValueError, match="invalid CPU family"):
             detect_processor_model(0x20, 0x00)
 
-    def test_invalid_model_fam19(self):
+    @pytest.mark.parametrize("mod", [0x20, 0x50, 0x9F, 0xB0])
+    def test_invalid_model_fam19(self, mod):
         with pytest.raises(ValueError, match="invalid CPU model"):
-            detect_processor_model(0x19, 0x50)
+            detect_processor_model(0x19, mod)
 
-    def test_invalid_model_fam1a(self):
+    @pytest.mark.parametrize("mod", [0x20, 0x4F, 0x60])
+    def test_invalid_model_fam1a(self, mod):
         with pytest.raises(ValueError, match="invalid CPU model"):
-            detect_processor_model(0x1A, 0x20)
+            detect_processor_model(0x1A, mod)
 
 
 # ---- GuestPolicy -------------------------------------------------------------
@@ -341,6 +353,47 @@ class TestTcbVersion:
             TcbVersion(b"\x00" * 4, ProcessorModel.MILAN)
 
 
+# ---- ETcbVersion -------------------------------------------------------------
+
+
+class TestETcbVersion:
+    def test_layout_and_to_dict(self):
+        # Each defined byte has a distinct unsigned value; reserved bytes are ignored.
+        raw = bytes(range(0xF2, 0x100)) + b"\xaa" * 18
+        etcb = ETcbVersion.from_bytes(raw)
+        expected = {
+            "ip_key_manager": 0xF2,
+            "mp1": 0xF3,
+            "art_fmc": 0xF4,
+            "art_rt": 0xF5,
+            "had_driver": 0xF6,
+            "boot_driver": 0xF7,
+            "pre_esid": 0xF8,
+            "tmpm": 0xF9,
+            "microcode": 0xFA,
+            "soc_driver": 0xFB,
+            "asp_os_driver": 0xFC,
+            "fhp_driver": 0xFD,
+            "dpe_driver": 0xFE,
+            "arg": 0xFF,
+        }
+        assert ETCB_VERSION_SIZE == 32
+        assert etcb.raw == raw
+        assert etcb.to_dict() == expected
+        for field, value in expected.items():
+            assert getattr(etcb, field) == value
+
+    def test_zero_versions(self):
+        etcb = ETcbVersion.from_bytes(bytes(32))
+        assert set(etcb.to_dict().values()) == {0}
+
+    @pytest.mark.parametrize("size", [0, 8, 31, 33, 64])
+    @pytest.mark.parametrize("factory", [ETcbVersion, ETcbVersion.from_bytes])
+    def test_invalid_size(self, size, factory):
+        with pytest.raises(ValueError, match=f"Invalid ETcbVersion length: expected 32 bytes, got {size}"):
+            factory(bytes(size))
+
+
 # ---- EcdsaSignature ----------------------------------------------------------
 
 
@@ -399,6 +452,11 @@ class TestAttestationReport:
         report = AttestationReport.from_bytes(report_v5_turin_bytes)
         assert report.version == 5
         assert report.processor_model == ProcessorModel.TURIN
+
+    def test_from_bytes_autodetect_siena(self):
+        raw = build_report_bytes(version=3, cpuid_fam_id=0x19, cpuid_mod_id=0xA0)
+        report = AttestationReport.from_bytes(raw)
+        assert report.processor_model == ProcessorModel.SIENA
 
     def test_from_bytes_explicit_model(self, report_v2_milan_bytes):
         report = AttestationReport.from_bytes(report_v2_milan_bytes, processor_model=ProcessorModel.MILAN)
@@ -502,6 +560,36 @@ class TestAttestationReport:
         assert r.launch_mit_vector is None
         assert r.current_mit_vector is None
 
+    # --- Extended TCB fields (v6+) --------------------------------------------
+
+    def test_etcb_fields_v6(self):
+        current = bytes(range(32))
+        launch = bytes(range(32, 64))
+        committed = bytes(range(64, 96))
+        raw = bytearray(build_report_bytes(version=6, cpuid_fam_id=0x1A, cpuid_mod_id=0x50))
+        raw[0x220:0x240] = current
+        raw[0x240:0x260] = launch
+        raw[0x260:0x280] = committed
+        r = AttestationReport.from_bytes(bytes(raw))
+        assert r.processor_model == ProcessorModel.VENICE
+        d = r.to_dict()
+        for field, expected in [("current_etcb", current), ("launch_etcb", launch), ("committed_etcb", committed)]:
+            etcb = getattr(r, field)
+            assert isinstance(etcb, ETcbVersion)
+            assert etcb.raw == expected
+            assert etcb.microcode == expected[8]
+            assert d[field] == ETcbVersion.from_bytes(expected).to_dict()
+
+    @pytest.mark.parametrize("version", [2, 3, 4, 5])
+    def test_etcb_fields_before_v6_return_none(self, version):
+        raw = bytearray(build_report_bytes(version=version))
+        raw[0x220:0x280] = b"\xff" * 96
+        r = AttestationReport.from_bytes(bytes(raw), processor_model=ProcessorModel.MILAN)
+        d = r.to_dict()
+        for field in ["current_etcb", "launch_etcb", "committed_etcb"]:
+            assert getattr(r, field) is None
+            assert d[field] is None
+
     # --- Nested types ---------------------------------------------------------
 
     def test_guest_policy_type(self, report_v3_genoa_bytes):
@@ -564,6 +652,9 @@ class TestAttestationReport:
             "launch_tcb",
             "launch_mit_vector",
             "current_mit_vector",
+            "current_etcb",
+            "launch_etcb",
+            "committed_etcb",
             "signature",
         }
         assert required.issubset(set(d.keys()))

@@ -17,8 +17,8 @@ verify attestation evidences.
 
 ### SEV-SNP Revision
 
-- SEV-SNP Firmware ABI Spec: Rev. 1.58 (May 2025)
-- KDS Interface Spec: Rev. 1.00 (January 2025)
+- SEV-SNP Firmware ABI Spec: Rev. 1.59 (August 2026)
+- KDS Interface Spec: Rev. 1.05 (September 2026)
 
 ### Tested Environments
 
