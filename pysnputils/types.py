@@ -75,10 +75,19 @@ class SignatureAlgorithm(IntEnum):
 
 
 class SigningKey(IntEnum):
-    """The key used to sign the attestation report."""
+    """
+    The key used to sign the attestation report.
+
+    0: Versioned Chip Endorsement Key (VCEK)
+    1: Versioned Loaded Endorsement Key (VLEK)
+    2: Chip-Secret VCEK (CSVCEK)
+    3-6: RESERVED
+    7: None
+    """
 
     VCEK = 0
     VLEK = 1
+    CSVCEK = 2
     NONE = 7
 
 
@@ -400,7 +409,7 @@ class KeyInfo:
     |--------|---------------|-------------|
     | 0      | AUTHOR_KEY_EN | The digest of the author key is present in AUTHOR_KEY_DIGEST (1) or not (0). |
     | 1      | MASK_CHIP_KEY | 0: Firmware signs the report with VCEK or VLEK, 1: Fill 0s in the SIGNATURE field. |
-    | 2-4    | SIGNING_KEY   | The signing key selection (0=VCEK, 1=VLEK, 2-6: Reserved, 7: None) |
+    | 2-4    | SIGNING_KEY   | The signing key selection (0=VCEK, 1=VLEK, 2=CSVCEK, 3-6: Reserved, 7: None) |
     | 5-31   | -             | Reserved. Must be 0. |
     """
 
