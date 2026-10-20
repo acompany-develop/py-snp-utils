@@ -1,6 +1,6 @@
 # py-snp-utils
 
-![SemVer](https://img.shields.io/badge/pysnputils-0.2.0-blue)
+![SemVer](https://img.shields.io/badge/pysnputils-0.2.1-blue)
 ![Python Version](https://img.shields.io/badge/Python-3.11+-blue)
 [![License](https://img.shields.io/badge/License-MIT-red)](/LICENSE)
 
